@@ -1,181 +1,182 @@
-# Reducer module
-One of the strength of the Redux pattern is its `reducer` part. 
-But it is a problem when projects become bigger and the amount of code that can be shared between actions and reducers can be huge. 
-That's why this module exists. It provides an easy to use `API` to create actions and reducers. 
-It also provides a default behavior for some use cases that can drastically reduce the amount of code in reducers. See [Asynchronous actions](#asynchronous-actions).
+# Reducer
 
-> This walk-through is about how to use the reducer module. 
-> It assumes you know how to use the Redux pattern and how it works. 
-> If not please check the [official docs](http://redux.js.org/docs/basics/Reducers.html) first.
+> Helper that enhance Redux reducer capacities
+
+One of the strength of the Redux pattern is its reducer part.
+
+But it is a problem when projects become bigger and the amount of code that can be shared between actions and reducers can be huge.
+
+That's why this module exists. It provides an easy to use API to create actions and reducers. It also provides a default behavior for some use cases that can drastically reduce the amount of code in reducers. See [Asynchronous actions](#asynchronous-actions).
+
+This walk-through is about how to use the reducer module. It assumes you know how to use the Redux pattern and how it works.
 
 ## Create a reducer
-As an example lets create a `reducer` that will handle the data of a specific user.
-It requires only `3` lines of code.
 
-`redux/modules/user.js`
+As an example lets create a reducer that will handle the data of a specific user. It requires only 3 lines of code.
+
 ```javascript
-import Reducer from '@mapleinside/reducer';
+// redux/reducers/User.js
+
+import Reducer from '@nicolascava/reducer';
 
 const reducer = new Reducer();
 
 export default reducer.bindReducer();
 ```
 
-The way you bind this newly created `reducer` to the Redux store is the same as usual. 
-Using this method to create a reducer does not affect anything outside of it.
+The way you bind this newly created reducer to the Redux store is the same as usual. Using this method to create a reducer does not affect anything outside of it.
 
-`redux/modules/reducer.js`
 ```javascript
-import {combineReducers} from 'redux';
+// redux/Reducer.js
 
-import user from './user';
+import { combineReducers } from 'redux';
 
-export default combineReducers({user});
+import User from './reducers/User';
+
+export default combineReducers({ user: User });
 ```
 
 ## Initial state
-By default, the `initial state` of the `reducer` is an empty object. But ***you should always*** explicitly set the initial state, even if it is empty.
+
+By default, the initial state of the reducer is an empty object. But **you should always** explicitly set the initial state, even if it is empty.
+
 To specify an initial state to the reducer, just pass it as the **first** argument to the constructor.
 
-`redux/modules/reducer.js`
 ```javascript
+// redux/Reducer.js
+
 const initialState = {
-  type: 'admin'
+  type: 'admin',
 };
 
-// ...
 const reducer = new Reducer(initialState);
-// ...
 ```
 
 ## Synchronous actions
-In order to make a `reducer` interact with the data, we need an `action`. 
+
+In order to make a reducer interact with the data, we need an action.
+
 Let's say we want to change the type of a user in local (for interaction with a server, see [Asynchronous actions](#asynchronous-actions)).
 
-`redux/modules/user.js`
 ```javascript
-// ...
+// redux/reducers/User.js`
+
 const SET_TYPE = `${appName}/user/SET_TYPE`;
-// ...
 const reducer = new Reducer(initialState);
+
 export const setType = reducer.createAction(SET_TYPE);
-// ...
 ```
 
-The way you tell the `reducer` to react to the `actions` is slightly different from the original version of Redux. 
+The way you tell the reducer to react to the actions is slightly different from the original version of Redux. 
 
-Instead of using a `switch` statement, the module uses `functions`. 
-Each case the `reducer` should handle must be in an `object`.
-`Keys` are representing the `action` and their `values` should be in the form of a `function`. 
+Instead of using a switch statement, the module uses functions. Each case the reducer should handle must be in an object. Keys are representing the action and their values should be in the form of a function. 
 
-These `functions` receive the `current state` and the `action` and must return a new `object` representing the `new state`, after mutation (just like in the original Redux model).
-To tell the `reducer` to react to these cases, simply pass the `object` as a **second** argument to the constructor.
+These functions receive the current state and the action and must return a new object representing the new state, after mutation (just like in the original Redux model).
 
-`redux/modules/user.js`
+To tell the reducer to react to these cases, simply pass the object as a **second** argument to the constructor.
+
 ```javascript
-// ...
+// redux/reducers/User.js`
+
 const cases = {
-  [SET_TYPE]: (state, {payload}) => ({
+  [SET_TYPE]: (state, { payload }) => ({
     ...state,
-    type: payload.type
+    type: payload.type,
   })
 };
-// ...
 const reducer = new Reducer(initialState, cases);
-// ...
 ```
 
 ## Asynchronous actions
-`Asynchronous actions` work almost the same as synchronous ones. 
-Except that you need to pass it a `Promise` and an action `type` for the base action. 
-(The `success` and `failure` types are predictably generated by the module, enforcing a certain coding standard).
+
+Asynchronous actions work almost the same as synchronous ones. 
+
+Except that you need to pass it a Promise and an action type for the base action (the `Success` and `Failure` types are predictably generated by the module, enforcing a certain coding standard).
 
 Let's say we need an action to update the user on the server.
 
-`redux/modules/user.js`
 ```javascript
-// ...
+// redux/reducers/User.js`
+
 const UPDATE = `${appName}/user/UPDATE`;
-// ...
+
 export const update = reducer.createAsyncAction(
   UPDATE,
-  (client, data) => client.patch(`/users/${data.id}`, data)
+  (client, data) => client.patch(`/users/${data.id}`, data),
 );
-// ...
 ```
 
-Now the `reducer` needs to listen to the actions.
-**But wait**, we did not declare any `success` or `failure` action?! *That's right*, the module takes care of this part by predictably generating them.  
-It creates the actions of `success` and `failure` by appending `_SUCCESS` or `_FAILURE` to the base action. 
+Now the reducer needs to listen to the actions.
 
-So, to make the reducer react to these: 
+But wait, we did not declare any `Success` or `Failure` action?! That's right, the module takes care of this part by predictably generating them. It creates the actions of `Success` and `Failure` by appending `_SUCCESS` or `_FAILURE` to the base action. 
 
-`redux/modules/user.js`
+So, to make the reducer reacts to these: 
+
 ```javascript
+// redux/reducers/User.js`
+
 const UPDATE = `${appName}/user/UPDATE`;
-// ...
 const cases = {
   [UPDATE]: state => ({
     ...state,
     updating: true,
     updated: false,
-    updateFailed: false
+    updateFailed: false,
   }),
   [`${UPDATE}_SUCCESS`]: (state, payload) => ({
     ...state,
     updating: false,
     updated: true,
     updateFailed: false,
-    payload
+    payload,
   }),
   [`${UPDATE}_FAILURE`]: (state, error) => ({
     ...state,
     updating: false,
     updated: false,
     updateFailed: true,
-    error
-  })
+    error,
+  }),
 };
-// ...
 const reducer = new Reducer(initialState, cases);
-// ...
 ```
 
-*That's it*, the `reducer` now understands and reacts to `async actions`.
+That's it, the reducer now understands and reacts to async actions.
 
-***Okay.. You say that this is going to help reducing boilerplate, but it does not seem to help that much...***
+I say that this is going to help reducing boilerplate, but it does not seem to help that much.
 
-**True!** That's why the example above is handled ***directly by the module***. 
-You don't need all that code as these cases are generated by the module, out of the box. 
-The only thing you need to do is to add a `third argument` to `createAsyncAction` being an `array` containing the `keys of the states` reflecting the current state of the action.
+True! That's why the example above is handled **directly by the module**. 
+
+You don't need all that code as these cases are generated by the module, out of the box. The only thing you need to do is to add a third argument to `createAsyncAction` being an `array` containing the keys of the states reflecting the current state of the action.
 
 Knowing this, the complete code to handle an async case **with the behavior described above** looks like this:
 
-`redux/modules/user.js`
 ```javascript
+// redux/modules/User.js
+
 const UPDATE = `${appName}/user/UPDATE`;
-// ...
 const reducer = new Reducer(initialState, cases);
+
 export const update = reducer.createAsyncAction(
   UPDATE,
   (client, data) => client.patch(`/users/${data.id}`, data),
-  ['updating', 'updated', 'updateFailed']
+  ['updating', 'updated', 'updateFailed'],
 );
 ```
 
 Way shorter, isn't it?
 
-*Well*, that said, sometimes, in case of a `success` or a `failure` you will need special treatments that the module can not guess by itself. 
-That's why you can easily override these cases!
+Well, that said, sometimes, in case of a `Success` or a `Failure` you will need special treatments that the module can not guess by itself. That's why you can easily override these cases!
 
 ### Override a generated reducer case
-As said, sometimes the default behavior does not match the needs. 
-In that case, just add the case to `override` inside the `object` passed to the constructor. 
-Let's say we want to set a state containing a `message` when the user is updated:
 
-`redux/modules/user.js`
+As said, sometimes the default behavior does not match the needs.
+
+In that case, just add the case to override inside the object passed to the constructor. Let's say we want to set a state containing a message when the user is updated:
+
 ```javascript
-// ...
+// redux/reducers/User.js`
+
 const cases = {
   [`${UPDATE}_SUCCESS`]: (state, payload) => ({
     ...state,
@@ -183,14 +184,34 @@ const cases = {
     updated: true,
     updateFailed: false,
     payload,
-    message: 'User updated. Yolo!'
-  })
+    message: 'User updated!',
+  }),
 };
-// ...
 const reducer = new Reducer(initialState, cases);
-// ...
 ```
 
-Still worth it? Absolutely. You added one case instead of three!
+Still worth it? Absolutely. You added one case instead of three! With this module, reducers are loosing some extra weight!
 
-With this module, `reducers` are loosing some extra weight!
+## License
+
+The MIT License (MIT)
+
+Copyright (c) 2018 Nicolas Cava
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
