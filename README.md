@@ -62,9 +62,8 @@ Let's say we want to change the type of a user in local (for interaction with a 
 // redux/reducers/User.js`
 
 const SET_TYPE = `${appName}/user/SET_TYPE`;
-const reducer = new Reducer(initialState);
 
-export const setType = reducer.createAction(SET_TYPE);
+export const setType = Reducer.createAction(SET_TYPE);
 ```
 
 The way you tell the reducer to react to the actions is slightly different from the original version of Redux. 
