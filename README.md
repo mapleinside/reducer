@@ -2,6 +2,8 @@
 
 > Helper that enhance Redux reducer capacities
 
+> ❌ Sorry, but this library is no longer maintained. Please find an alternative.
+
 One of the strength of the Redux pattern is its reducer part.
 
 But it is a problem when projects become bigger and the amount of code that can be shared between actions and reducers can be huge.
@@ -195,7 +197,7 @@ Still worth it? Absolutely. You added one case instead of three! With this modul
 
 The MIT License (MIT)
 
-Copyright (c) 2018 Nicolas Cava
+Copyright (c) 2020 Nicolas Cava
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
